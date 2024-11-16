@@ -6,21 +6,32 @@
 int game_is_running = FALSE;
 int WINDOW_WIDTH = (800);
 int WINDOW_HEIGHT = (600);
+int textWidth,textHeight;
 int windowed =1 ;
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 TTF_Font* font = NULL;
+SDL_Texture* timerTexture = NULL;
+
 
 int last_frame_time = 0;
 int move_hori = 0;
 int move_vert = 0;
 int in_menu = 1;
+int timer = 0;
+int minutes,seconds;
+unsigned end_time;
+char timerText[16];
 
-const char* menuItems[NUM_MENU_ITEMS] = {"Start Game", "Options", "Quit"} ;
+const char* menuItems[NUM_MENU_ITEMS] = {"Start Game", "Controls", "Quit"} ;
+const char* pauseItems[NUM_PAUSE_ITEMS] = {"Resume", "Controls", "Return to Menu", "Quit"};
 int selectedItem = 0;
+
 SDL_Color colorNormal = {255,255,255,255};
 SDL_Color colorSelected = {255,0,0,255};
+SDL_Color timerColor = {255,255,255,255};
 
+void setup();
 
 struct ball {
 	float x;
@@ -61,7 +72,7 @@ int initialize_window(void){
 		fprintf(stderr,"SDL_TTF could not initialize ");
 		return FALSE;
 	}
-	font = TTF_OpenFont("./font/ARCADECLASSIC.TTF",FONT_SIZE);
+	font = TTF_OpenFont("./font/joystix.otf",FONT_SIZE);
 	if(!font){
 		fprintf(stderr, "Failed to load font! \n ");
 		printf("TTF_OpenFont: %s\n", TTF_GetError());
@@ -105,6 +116,10 @@ SDL_Texture* LoadTexture(const char* file, SDL_Renderer* renderer){
 }
 
 
+void showControls(){
+	//TODO;
+}
+
 void process_input(){
 	//check for input
 	SDL_Event event;
@@ -123,7 +138,7 @@ void process_input(){
 			if( event.key.keysym.sym == SDLK_ESCAPE){
 				game_is_running = FALSE;
 			}
-			if(!in_menu){
+			if(in_menu==0){
 			if( event.key.keysym.sym == SDLK_RIGHT){
 				move_hori = 1;
 			}
@@ -137,7 +152,7 @@ void process_input(){
 				move_vert = 1;
 			}
 			if(event.key.keysym.sym == SDLK_BACKSPACE){
-				in_menu=1;
+				in_menu=2;
 			}
 			}else{
 				if( event.key.keysym.sym == SDLK_UP){
@@ -147,16 +162,29 @@ void process_input(){
 				selectedItem = (selectedItem + 1) % NUM_MENU_ITEMS;
 			}
 			if(event.key.keysym.sym == SDLK_RETURN){
+				if(in_menu == 1){
 				if (selectedItem == 0) {
-                        printf("Start Game selected\n");
+                        //printf("Start Game selected\n");
                         in_menu = 0;
                     } else if (selectedItem == 1) {
-                        printf("Options selected\n");
-                        // Handle options
+                        showControls();
                     } else if (selectedItem == 2) {
                         game_is_running = FALSE;
-                    
-			}
+                    }}
+				if(in_menu == 2){
+				if (selectedItem == 0) {
+                        //printf("Start Game selected\n");
+                        in_menu = 0;
+                    } else if (selectedItem == 1) {
+                        showControls();
+                    } else if (selectedItem == 2) {
+                        in_menu =1;
+						setup();
+                    }else if(selectedItem ==3){
+						game_is_running = FALSE;
+					}}
+			
+			
 			}}
 			break;
 		case SDL_KEYUP:
@@ -195,10 +223,13 @@ void update(){
 	float delta_time = (SDL_GetTicks() - last_frame_time) / 1000.0f;
  
 	last_frame_time = SDL_GetTicks();
-
+	timer = end_time - last_frame_time;
+	minutes = timer / 60000;
+	seconds = (timer % 60000) / 1000;
+	snprintf(timerText,sizeof(timerText),"%02d:%02d",minutes,seconds);
 	// move the ball 20 pixels per second
-	ball.x += 50 * delta_time * move_hori;
-	ball.y += 50 * delta_time * move_vert;
+	ball.x += 200 * delta_time * move_hori;
+	ball.y += 200 * delta_time * move_vert;
 }
 
 
@@ -210,7 +241,7 @@ void render(){
 	SDL_Texture* characterTexture = LoadTexture("./img/charac.png",renderer);
 	//TODO : HERE is where we can start drawing our game
 	//Draw a rectangle
-	SDL_Rect ball_rect = {
+	SDL_Rect charac = {
 		(int)ball.x,
 		(int)ball.y,
 		(int)ball.width,
@@ -220,13 +251,33 @@ void render(){
 	SDL_SetRenderDrawColor(renderer, 0,0,0,255);
 	SDL_RenderClear(renderer);
 
-	//SDL_RenderFillRect(renderer, &ball_rect);
-	if(!in_menu){
-	SDL_RenderCopy(renderer, characterTexture, NULL, &ball_rect);
-	}else{
+	//SDL_RenderFillRect(renderer, &charac);
+	if(in_menu==0){
+	SDL_RenderCopy(renderer, characterTexture, NULL, &charac);
+	timerTexture = RenderText(timerText,font,timerColor,renderer);
+	SDL_QueryTexture(timerTexture,NULL,NULL,&textWidth,&textHeight);
+	SDL_Rect textRect = {10,10,textWidth,textHeight};
+	//SDL_RenderClear(renderer);
+	SDL_RenderCopy(renderer, timerTexture,NULL,&textRect);
+	SDL_DestroyTexture(timerTexture);
+	
+	}else if(in_menu == 1){
 		for(int i=0;i < NUM_MENU_ITEMS;i++){
 			SDL_Color color = (i == selectedItem) ? colorSelected : colorNormal;
 			SDL_Texture* textTexture = RenderText(menuItems[i],font,color,renderer);
+			if(textTexture){
+				
+				SDL_QueryTexture(textTexture, NULL, NULL, &textWidth, &textHeight);
+				SDL_Rect renderQuad = { (WINDOW_WIDTH - textWidth )/2,200+ i * 50, textWidth,textHeight};
+				SDL_RenderCopy(renderer, textTexture, NULL, &renderQuad);
+				SDL_DestroyTexture(textTexture);
+			}
+
+		}
+	}else{
+		for(int i=0;i < NUM_PAUSE_ITEMS;i++){
+			SDL_Color color = (i == selectedItem) ? colorSelected : colorNormal;
+			SDL_Texture* textTexture = RenderText(pauseItems[i],font,color,renderer);
 			if(textTexture){
 				int textWidth,textHeight;
 				SDL_QueryTexture(textTexture, NULL, NULL, &textWidth, &textHeight);
@@ -236,13 +287,22 @@ void render(){
 			}
 
 		}
-	}// swap the double buffer
+	}
+	
+	
+	// swap the double buffer
+
 	SDL_RenderPresent(renderer);
 } 
 
 void setup(){
-	ball.x = 20;
-	ball.y = 20;
+	srand(time(NULL));
+	end_time = 120000;
+	timer = 0;
+	ball.x = rand() % WINDOW_WIDTH + 1;
+	//ball.x = 20;
+	ball.y = rand() % WINDOW_HEIGHT + 1;
+	//ball.y = 20;
 	ball.width = 64;
 	ball.height = 64;
 	//TODO;

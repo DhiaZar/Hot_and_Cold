@@ -25,7 +25,7 @@ char timerText[16];
 
 const char* menuItems[NUM_MENU_ITEMS] = {"Start Game", "Controls", "Quit"} ;
 const char* pauseItems[NUM_PAUSE_ITEMS] = {"Resume", "Controls", "Return to Menu", "Quit"};
-int selectedItem = 0;
+int selectedItem= 0;
 
 SDL_Color colorNormal = {255,255,255,255};
 SDL_Color colorSelected = {255,0,0,255};
@@ -155,32 +155,38 @@ void process_input(){
 				in_menu=2;
 			}
 			}else{
-				if( event.key.keysym.sym == SDLK_UP){
-				selectedItem = (selectedItem - 1 + NUM_MENU_ITEMS) % NUM_MENU_ITEMS;
+				if( event.key.keysym.sym == SDLK_UP && in_menu == 1){
+				selectedItem= (selectedItem- 1 + NUM_MENU_ITEMS) % NUM_MENU_ITEMS;
 			}
-			if(event.key.keysym.sym == SDLK_DOWN){
-				selectedItem = (selectedItem + 1) % NUM_MENU_ITEMS;
+			if(event.key.keysym.sym == SDLK_DOWN && in_menu == 1){
+				selectedItem= (selectedItem + 1) % NUM_MENU_ITEMS;
+			}
+			if( event.key.keysym.sym == SDLK_UP && in_menu == 2){
+				selectedItem= (selectedItem- 1 + NUM_PAUSE_ITEMS) % NUM_PAUSE_ITEMS;
+			}
+			if(event.key.keysym.sym == SDLK_DOWN && in_menu == 2){
+				selectedItem= (selectedItem+ 1) % NUM_PAUSE_ITEMS;
 			}
 			if(event.key.keysym.sym == SDLK_RETURN){
 				if(in_menu == 1){
-				if (selectedItem == 0) {
+				if (selectedItem== 0) {
                         //printf("Start Game selected\n");
                         in_menu = 0;
-                    } else if (selectedItem == 1) {
+                    } else if (selectedItem== 1) {
                         showControls();
-                    } else if (selectedItem == 2) {
+                    } else if (selectedItem== 2) {
                         game_is_running = FALSE;
                     }}
 				if(in_menu == 2){
-				if (selectedItem == 0) {
+				if (selectedItem== 0) {
                         //printf("Start Game selected\n");
                         in_menu = 0;
-                    } else if (selectedItem == 1) {
+                    } else if (selectedItem== 1) {
                         showControls();
-                    } else if (selectedItem == 2) {
+                    } else if (selectedItem== 2) {
                         in_menu =1;
 						setup();
-                    }else if(selectedItem ==3){
+                    }else if(selectedItem==3){
 						game_is_running = FALSE;
 					}}
 			
@@ -263,27 +269,27 @@ void render(){
 	
 	}else if(in_menu == 1){
 		for(int i=0;i < NUM_MENU_ITEMS;i++){
-			SDL_Color color = (i == selectedItem) ? colorSelected : colorNormal;
-			SDL_Texture* textTexture = RenderText(menuItems[i],font,color,renderer);
-			if(textTexture){
+			SDL_Color colorMenu = (i == selectedItem) ? colorSelected : colorNormal;
+			SDL_Texture* textTextureMenu = RenderText(menuItems[i],font,colorMenu,renderer);
+			if(textTextureMenu){
 				
-				SDL_QueryTexture(textTexture, NULL, NULL, &textWidth, &textHeight);
+				SDL_QueryTexture(textTextureMenu, NULL, NULL, &textWidth, &textHeight);
 				SDL_Rect renderQuad = { (WINDOW_WIDTH - textWidth )/2,200+ i * 50, textWidth,textHeight};
-				SDL_RenderCopy(renderer, textTexture, NULL, &renderQuad);
-				SDL_DestroyTexture(textTexture);
+				SDL_RenderCopy(renderer, textTextureMenu, NULL, &renderQuad);
+				SDL_DestroyTexture(textTextureMenu);
 			}
 
 		}
 	}else{
 		for(int i=0;i < NUM_PAUSE_ITEMS;i++){
-			SDL_Color color = (i == selectedItem) ? colorSelected : colorNormal;
-			SDL_Texture* textTexture = RenderText(pauseItems[i],font,color,renderer);
-			if(textTexture){
-				int textWidth,textHeight;
-				SDL_QueryTexture(textTexture, NULL, NULL, &textWidth, &textHeight);
+			SDL_Color colorPause = (i == selectedItem) ? colorSelected : colorNormal;
+			SDL_Texture* textTexturePause = RenderText(pauseItems[i],font,colorPause,renderer);
+			if(textTexturePause){
+
+				SDL_QueryTexture(textTexturePause, NULL, NULL, &textWidth, &textHeight);
 				SDL_Rect renderQuad = { (WINDOW_WIDTH - textWidth )/2,200+ i * 50, textWidth,textHeight};
-				SDL_RenderCopy(renderer, textTexture, NULL, &renderQuad);
-				SDL_DestroyTexture(textTexture);
+				SDL_RenderCopy(renderer, textTexturePause, NULL, &renderQuad);
+				SDL_DestroyTexture(textTexturePause);
 			}
 
 		}

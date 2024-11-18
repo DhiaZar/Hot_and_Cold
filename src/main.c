@@ -20,7 +20,7 @@ int move_vert = 0;
 int in_menu = 1;
 int timer = 0;
 int minutes,seconds;
-unsigned end_time;
+unsigned end_time,start_time;
 char timerText[16];
 
 const char* menuItems[NUM_MENU_ITEMS] = {"Start Game", "Controls", "Quit"} ;
@@ -38,7 +38,7 @@ struct ball {
 	float y;
 	float width;
 	float height;
-} ball ;
+} ball , grass;
 
 
 int initialize_window(void){
@@ -230,7 +230,7 @@ void update(){
 	float delta_time = (SDL_GetTicks() - last_frame_time) / 1000.0f;
  
 	last_frame_time = SDL_GetTicks();
-	timer = end_time - last_frame_time;
+	timer = end_time+start_time - last_frame_time;
 	minutes = timer / 60000;
 	seconds = (timer % 60000) / 1000;
 	snprintf(timerText,sizeof(timerText),"%02d:%02d",minutes,seconds);
@@ -243,9 +243,10 @@ void update(){
 
 void render(){
 	//SDL_SetRenderDrawColor(renderer, <R> , <G> , <B> , <A>);
-	SDL_SetRenderDrawColor(renderer, 0 , 0 , 0 , 255);
+	SDL_SetRenderDrawColor(renderer, 148,173,7 , 255);
 	SDL_RenderClear(renderer);
 	SDL_Texture* characterTexture = LoadTexture("./img/charac.png",renderer);
+	SDL_Texture* grassTexture = LoadTexture("./img/grass.png",renderer);
 	//TODO : HERE is where we can start drawing our game
 	//Draw a rectangle
 	SDL_Rect charac = {
@@ -254,15 +255,26 @@ void render(){
 		(int)ball.width,
 		(int)ball.height
 	};
+	SDL_Rect grasss = {
+		(int)grass.x,
+		(int)grass.y,
+		(int)grass.width,
+		(int)grass.height
+	};
 	//Fill the Rectangle and render it
-	SDL_SetRenderDrawColor(renderer, 0,0,0,255);
+	//SDL_SetRenderDrawColor(renderer, 168,199,6,255);
 	SDL_RenderClear(renderer);
 
 	//SDL_RenderFillRect(renderer, &charac);
 	if(in_menu==0){
+
+	SDL_RenderCopy(renderer,grassTexture, NULL , &grasss);
 	SDL_RenderCopy(renderer, characterTexture, NULL, &charac);
+
+
 	timerTexture = RenderText(timerText,font,timerColor,renderer);
 	SDL_QueryTexture(timerTexture,NULL,NULL,&textWidth,&textHeight);
+
 	SDL_Rect textRect = {10,10,textWidth,textHeight};
 	//SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, timerTexture,NULL,&textRect);
@@ -307,14 +319,17 @@ void render(){
 
 void setup(){
 	srand(time(NULL));
-	end_time = 120000;
+	start_time = SDL_GetTicks();
+	end_time = 121000;
 	timer = 0;
 	ball.x = rand() % WINDOW_WIDTH + 1;
-	//ball.x = 20;
+	grass.x = rand()% WINDOW_WIDTH + 1 ;
 	ball.y = rand() % WINDOW_HEIGHT + 1;
-	//ball.y = 20;
+	grass.y = rand() % WINDOW_HEIGHT + 1;
 	ball.width = 128;
 	ball.height = 128;
+	grass.width=64;
+	grass.height=64;
 	//TODO;
 }
 

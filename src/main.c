@@ -6,7 +6,7 @@
 int game_is_running = FALSE;
 int WINDOW_WIDTH = (800);
 int WINDOW_HEIGHT = (600);
-int textWidth,textHeight;
+int textWidth,textHeight,textPadding,textSeparation;
 int windowed =1 ;
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
@@ -208,6 +208,7 @@ void process_input(){
 				}else{
 					SDL_SetWindowFullscreen(window, SDL_TRUE);
 				}
+				SDL_GetWindowSize(window,&WINDOW_WIDTH,&WINDOW_HEIGHT);
 			}
 			break;
 	
@@ -274,7 +275,9 @@ void render(){
 			if(textTextureMenu){
 				
 				SDL_QueryTexture(textTextureMenu, NULL, NULL, &textWidth, &textHeight);
-				SDL_Rect renderQuad = { (WINDOW_WIDTH - textWidth )/2,200+ i * 50, textWidth,textHeight};
+				textSeparation = WINDOW_HEIGHT / 8 ;
+				textPadding = 0.5 * (WINDOW_HEIGHT - (2*textSeparation) - (textHeight * 3));
+				SDL_Rect renderQuad = { (WINDOW_WIDTH - textWidth )/2,textPadding+ i * textSeparation, textWidth,textHeight};
 				SDL_RenderCopy(renderer, textTextureMenu, NULL, &renderQuad);
 				SDL_DestroyTexture(textTextureMenu);
 			}
@@ -287,7 +290,8 @@ void render(){
 			if(textTexturePause){
 
 				SDL_QueryTexture(textTexturePause, NULL, NULL, &textWidth, &textHeight);
-				SDL_Rect renderQuad = { (WINDOW_WIDTH - textWidth )/2,200+ i * 50, textWidth,textHeight};
+				textPadding = 0.5 * (WINDOW_HEIGHT - (3*textSeparation) - (textHeight * 3));
+				SDL_Rect renderQuad = { (WINDOW_WIDTH - textWidth )/2,textPadding+ i * textSeparation, textWidth,textHeight};
 				SDL_RenderCopy(renderer, textTexturePause, NULL, &renderQuad);
 				SDL_DestroyTexture(textTexturePause);
 			}
@@ -309,8 +313,8 @@ void setup(){
 	//ball.x = 20;
 	ball.y = rand() % WINDOW_HEIGHT + 1;
 	//ball.y = 20;
-	ball.width = 64;
-	ball.height = 64;
+	ball.width = 128;
+	ball.height = 128;
 	//TODO;
 }
 

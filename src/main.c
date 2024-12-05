@@ -12,7 +12,7 @@ SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 TTF_Font* font = NULL;
 SDL_Texture* timerTexture = NULL;
-
+SDL_Rect grasses[43];
 
 int last_frame_time = 0;
 int move_hori = 0;
@@ -21,6 +21,7 @@ int in_menu = 1;
 int timer = 0;
 int minutes,seconds;
 unsigned end_time,start_time;
+int grassDensity,temp;
 char timerText[16];
 
 const char* menuItems[NUM_MENU_ITEMS] = {"Start Game", "Controls", "Quit"} ;
@@ -32,6 +33,13 @@ SDL_Color colorSelected = {255,0,0,255};
 SDL_Color timerColor = {255,255,255,255};
 
 void setup();
+int max(int a,int b){
+	if(a>b){
+		return a;
+	}else{
+		return b;}
+}
+
 
 struct ball {
 	float x;
@@ -125,6 +133,123 @@ void process_input(){
 	SDL_Event event;
 	SDL_PollEvent(&event);
 
+    switch(event.key.keysym.sym){
+        case SDLK_ESCAPE:
+            game_is_running =FALSE;
+            break;
+        case SDLK_RIGHT:
+            if(in_menu == 0){
+                if(event.type == SDL_KEYDOWN && in_menu ==0){
+                    move_hori = 1;
+                }else if(event.type == SDL_KEYUP && in_menu ==0){
+                    move_hori = 0;
+                }
+            }
+            break;
+
+        case SDLK_LEFT:
+            if(in_menu == 0){
+                if(event.type == SDL_KEYDOWN && in_menu ==0){
+                    move_hori = -1;
+                }else if(event.type == SDL_KEYUP && in_menu ==0){
+                    move_hori = 0;
+                }
+            }
+            break;
+
+
+        case SDLK_UP:
+            if(event.type == SDL_KEYDOWN){
+                switch(in_menu){
+                    case 0:
+                        move_vert = -1;
+                        break;
+                    case 1:
+                        selectedItem = (selectedItem +1)% NUM_MENU_ITEMS;
+                        break;
+                    case 2:
+                        selectedItem = (selectedItem +1)% NUM_PAUSE_ITEMS;
+                        break;
+                        }
+                        
+                     
+            }else if(event.type == SDL_KEYUP && in_menu ==0){
+                    move_vert = 0;
+            }
+            break;
+
+
+        case SDLK_DOWN:
+            if(event.type == SDL_KEYDOWN){
+                switch(in_menu){
+                    case 0:
+                        move_vert = 1;
+                        break;
+                    case 1:
+                        selectedItem = (selectedItem - 1 + NUM_MENU_ITEMS)% NUM_MENU_ITEMS;
+                        break;
+                    case 2:
+                        selectedItem = (selectedItem - 1 + NUM_PAUSE_ITEMS)% NUM_PAUSE_ITEMS;
+                        break;
+                        }
+                        
+                     
+            }else if(event.type == SDL_KEYUP && in_menu ==0){
+                    move_vert = 0;
+            }
+            break;
+
+        case SDLK_RETURN:
+            if(in_menu == 1){
+                switch(selectedItem){
+                    case 0:
+                        in_menu = 0;
+                        break;
+                    case 1:
+                        showControls();
+                        break;
+                    case 2:
+                        game_is_running = FALSE;
+                        break;
+                }
+            }else if(in_menu == 2){
+                switch(selectedItem){
+                    case 0:
+                        in_menu = 0;
+                        break;
+                    case 1:
+                        showControls();
+                        break;
+                    case 2:
+                        in_menu =1;
+                        setup();
+						break;
+                    case 3:
+                        game_is_running = FALSE;
+                        break;
+                }
+            }
+            break;
+
+
+        case SDLK_BACKSPACE:
+            if(in_menu == 0){
+                in_menu =2;
+            }
+            break;
+
+        case SDLK_F11:
+            windowed = !windowed;
+            if(windowed){
+					SDL_SetWindowFullscreen(window, SDL_FALSE);
+				}else{
+					SDL_SetWindowFullscreen(window, SDL_TRUE);
+				}
+			SDL_GetWindowSize(window,&WINDOW_WIDTH,&WINDOW_HEIGHT);
+			break;
+
+    }
+
 	switch(event.type){
 		//SDL_QUIT is the X button on the title window
 		case SDL_QUIT: 
@@ -133,84 +258,10 @@ void process_input(){
 		case SDL_WINDOWEVENT_SIZE_CHANGED:
 			WINDOW_HEIGHT = event.window.data1;
 			WINDOW_WIDTH = event.window.data2;
+			SDL_GetWindowSize(window,&WINDOW_WIDTH,&WINDOW_HEIGHT);
 			SDL_RenderPresent(renderer);
-		case SDL_KEYDOWN:
-			if( event.key.keysym.sym == SDLK_ESCAPE){
-				game_is_running = FALSE;
-			}
-			if(in_menu==0){
-			if( event.key.keysym.sym == SDLK_RIGHT){
-				move_hori = 1;
-			}
-			if(event.key.keysym.sym == SDLK_LEFT){
-				move_hori = -1;
-			}
-			if( event.key.keysym.sym == SDLK_UP){
-				move_vert = -1;
-			}
-			if(event.key.keysym.sym == SDLK_DOWN){
-				move_vert = 1;
-			}
-			if(event.key.keysym.sym == SDLK_BACKSPACE){
-				in_menu=2;
-			}
-			}else{
-				if( event.key.keysym.sym == SDLK_UP && in_menu == 1){
-				selectedItem= (selectedItem- 1 + NUM_MENU_ITEMS) % NUM_MENU_ITEMS;
-			}
-			if(event.key.keysym.sym == SDLK_DOWN && in_menu == 1){
-				selectedItem= (selectedItem + 1) % NUM_MENU_ITEMS;
-			}
-			if( event.key.keysym.sym == SDLK_UP && in_menu == 2){
-				selectedItem= (selectedItem- 1 + NUM_PAUSE_ITEMS) % NUM_PAUSE_ITEMS;
-			}
-			if(event.key.keysym.sym == SDLK_DOWN && in_menu == 2){
-				selectedItem= (selectedItem+ 1) % NUM_PAUSE_ITEMS;
-			}
-			if(event.key.keysym.sym == SDLK_RETURN){
-				if(in_menu == 1){
-				if (selectedItem== 0) {
-                        //printf("Start Game selected\n");
-                        in_menu = 0;
-                    } else if (selectedItem== 1) {
-                        showControls();
-                    } else if (selectedItem== 2) {
-                        game_is_running = FALSE;
-                    }}
-				if(in_menu == 2){
-				if (selectedItem== 0) {
-                        //printf("Start Game selected\n");
-                        in_menu = 0;
-                    } else if (selectedItem== 1) {
-                        showControls();
-                    } else if (selectedItem== 2) {
-                        in_menu =1;
-						setup();
-                    }else if(selectedItem==3){
-						game_is_running = FALSE;
-					}}
-			
-			
-			}}
 			break;
-		case SDL_KEYUP:
-			if(!in_menu){
-			if(event.key.keysym.sym == SDLK_RIGHT || event.key.keysym.sym == SDLK_LEFT){
-				move_hori = 0;
-			}
-			if(event.key.keysym.sym == SDLK_UP || event.key.keysym.sym == SDLK_DOWN){
-				move_vert = 0;
-			}}
-			if(event.key.keysym.sym == SDLK_F11){
-				windowed = !windowed;
-				if(windowed){
-					SDL_SetWindowFullscreen(window, SDL_FALSE);
-				}else{
-					SDL_SetWindowFullscreen(window, SDL_TRUE);
-				}
-				SDL_GetWindowSize(window,&WINDOW_WIDTH,&WINDOW_HEIGHT);
-			}
-			break;
+		
 	
 	}
 
@@ -240,7 +291,6 @@ void update(){
 }
 
 
-
 void render(){
 	//SDL_SetRenderDrawColor(renderer, <R> , <G> , <B> , <A>);
 	SDL_SetRenderDrawColor(renderer, 148,173,7 , 255);
@@ -255,20 +305,22 @@ void render(){
 		(int)ball.width,
 		(int)ball.height
 	};
-	SDL_Rect grasss = {
+	/*SDL_Rect grasss = {
 		(int)grass.x,
 		(int)grass.y,
 		(int)grass.width,
 		(int)grass.height
-	};
+	};*/
 	//Fill the Rectangle and render it
 	//SDL_SetRenderDrawColor(renderer, 168,199,6,255);
 	SDL_RenderClear(renderer);
 
 	//SDL_RenderFillRect(renderer, &charac);
 	if(in_menu==0){
-
-	SDL_RenderCopy(renderer,grassTexture, NULL , &grasss);
+	for(int j=0;j<grassDensity;j++){
+		SDL_RenderCopy(renderer,grassTexture, NULL , &(grasses[j]));
+	}
+	
 	SDL_RenderCopy(renderer, characterTexture, NULL, &charac);
 
 
@@ -316,20 +368,38 @@ void render(){
 
 	SDL_RenderPresent(renderer);
 } 
+void spawnGrass(int grassDensity, SDL_Rect bush[],int winwidth,int winheight){
+	for(int i =0;i<grassDensity;i++){
+		SDL_Rect rect = { 
+			rand() % winwidth + 1,
+			rand() % winheight + 1,
+			64,
+			64
+		};
+		bush[i]= rect;
+		};
+	}
+
 
 void setup(){
 	srand(time(NULL));
 	start_time = SDL_GetTicks();
+	/*SDL_SetWindowFullscreen(window, SDL_TRUE);
+	SDL_GetWindowSize(window,&WINDOW_HEIGHT,&WINDOW_WIDTH);
+	SDL_SetWindowFullscreen(window, SDL_FALSE);*/
 	end_time = 121000;
 	timer = 0;
+	temp = rand() % 17 + 25 ;
+	grassDensity = rand() % (max(abs(26-temp),abs(43-temp)));
+	spawnGrass(grassDensity,grasses,WINDOW_WIDTH,WINDOW_HEIGHT);
 	ball.x = rand() % WINDOW_WIDTH + 1;
-	grass.x = rand()% WINDOW_WIDTH + 1 ;
+	//grass.x = rand()% WINDOW_WIDTH + 1 ;
 	ball.y = rand() % WINDOW_HEIGHT + 1;
-	grass.y = rand() % WINDOW_HEIGHT + 1;
+	//grass.y = rand() % WINDOW_HEIGHT + 1;
 	ball.width = 128;
 	ball.height = 128;
-	grass.width=64;
-	grass.height=64;
+	//grass.width=64;
+	//grass.height=64;
 	//TODO;
 }
 

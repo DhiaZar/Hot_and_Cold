@@ -12,6 +12,7 @@ SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 TTF_Font* font = NULL;
 SDL_Texture* timerTexture = NULL;
+Mix_Music* bgMusic = NULL;
 SDL_Rect grasses[43];
 
 int last_frame_time = 0;
@@ -80,12 +81,22 @@ int initialize_window(void){
 		fprintf(stderr,"SDL_TTF could not initialize ");
 		return FALSE;
 	}
-	font = TTF_OpenFont("./font/joystix.otf",FONT_SIZE);
+	font = TTF_OpenFont("C:/Coding/untitled2/font/joystix.otf",FONT_SIZE);
 	if(!font){
 		fprintf(stderr, "Failed to load font! \n ");
 		printf("TTF_OpenFont: %s\n", TTF_GetError());
 		return FALSE;
 	}
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+        printf("SDL_mixer could not initialize! Mix_Error: %s\n", Mix_GetError());
+        return FALSE;
+    }
+	bgMusic = Mix_LoadMUS("C:/Coding/untitled2/audio/game_music.mp3");
+	if (!bgMusic) {
+        printf("Failed to load background music! Mix_Error: %s\n", Mix_GetError());
+        return FALSE;
+    }
+
 	return TRUE;
 
 }
@@ -133,144 +144,104 @@ void process_input(){
 	SDL_Event event;
 	SDL_PollEvent(&event);
 
-    switch(event.key.keysym.sym){
-        case SDLK_ESCAPE:
-            game_is_running =FALSE;
-            break;
-        case SDLK_RIGHT:
-            if(in_menu == 0){
-                if(event.type == SDL_KEYDOWN && in_menu ==0){
-                    move_hori = 1;
-                }else if(event.type == SDL_KEYUP && in_menu ==0){
-                    move_hori = 0;
-                }
-            }
-            break;
-
-        case SDLK_LEFT:
-            if(in_menu == 0){
-                if(event.type == SDL_KEYDOWN && in_menu ==0){
-                    move_hori = -1;
-                }else if(event.type == SDL_KEYUP && in_menu ==0){
-                    move_hori = 0;
-                }
-            }
-            break;
-
-
-        case SDLK_UP:
-            if(event.type == SDL_KEYDOWN){
-                switch(in_menu){
-                    case 0:
-                        move_vert = -1;
-                        break;
-                    case 1:
-                        selectedItem = (selectedItem +1)% NUM_MENU_ITEMS;
-                        break;
-                    case 2:
-                        selectedItem = (selectedItem +1)% NUM_PAUSE_ITEMS;
-                        break;
-                        }
-                        
-                     
-            }else if(event.type == SDL_KEYUP && in_menu ==0){
-                    move_vert = 0;
-            }
-            break;
-
-
-        case SDLK_DOWN:
-            if(event.type == SDL_KEYDOWN){
-                switch(in_menu){
-                    case 0:
-                        move_vert = 1;
-                        break;
-                    case 1:
-                        selectedItem = (selectedItem - 1 + NUM_MENU_ITEMS)% NUM_MENU_ITEMS;
-                        break;
-                    case 2:
-                        selectedItem = (selectedItem - 1 + NUM_PAUSE_ITEMS)% NUM_PAUSE_ITEMS;
-                        break;
-                        }
-                        
-                     
-            }else if(event.type == SDL_KEYUP && in_menu ==0){
-                    move_vert = 0;
-            }
-            break;
-
-        case SDLK_RETURN:
-            if(in_menu == 1){
-                switch(selectedItem){
-                    case 0:
-                        in_menu = 0;
-                        break;
-                    case 1:
-                        showControls();
-                        break;
-                    case 2:
-                        game_is_running = FALSE;
-                        break;
-                }
-            }else if(in_menu == 2){
-                switch(selectedItem){
-                    case 0:
-                        in_menu = 0;
-                        break;
-                    case 1:
-                        showControls();
-                        break;
-                    case 2:
-                        in_menu =1;
-                        setup();
-						break;
-                    case 3:
-                        game_is_running = FALSE;
-                        break;
-                }
-            }
-            break;
-
-
-        case SDLK_BACKSPACE:
-            if(in_menu == 0){
-                in_menu =2;
-            }
-            break;
-
-        case SDLK_F11:
-            windowed = !windowed;
-            if(windowed){
-					SDL_SetWindowFullscreen(window, SDL_FALSE);
-				}else{
-					SDL_SetWindowFullscreen(window, SDL_TRUE);
-				}
-			SDL_GetWindowSize(window,&WINDOW_WIDTH,&WINDOW_HEIGHT);
-			break;
-
-    }
-
 	switch(event.type){
 		//SDL_QUIT is the X button on the title window
-		case SDL_QUIT: 
-			game_is_running = FALSE; 
+		case SDL_QUIT:
+			game_is_running = FALSE;
 			break;
 		case SDL_WINDOWEVENT_SIZE_CHANGED:
 			WINDOW_HEIGHT = event.window.data1;
 			WINDOW_WIDTH = event.window.data2;
-			SDL_GetWindowSize(window,&WINDOW_WIDTH,&WINDOW_HEIGHT);
 			SDL_RenderPresent(renderer);
+		case SDL_KEYDOWN:
+			if( event.key.keysym.sym == SDLK_ESCAPE){
+				game_is_running = FALSE;
+			}
+			if(in_menu==0){
+			if( event.key.keysym.sym == SDLK_RIGHT){
+				move_hori = 1;
+			}
+			if(event.key.keysym.sym == SDLK_LEFT){
+				move_hori = -1;
+			}
+			if( event.key.keysym.sym == SDLK_UP){
+				move_vert = -1;
+			}
+			if(event.key.keysym.sym == SDLK_DOWN){
+				move_vert = 1;
+			}
+			if(event.key.keysym.sym == SDLK_BACKSPACE){
+				in_menu=2;
+				Mix_PauseMusic();
+			}
+			}else{
+				if( event.key.keysym.sym == SDLK_UP && in_menu == 1){
+				selectedItem= (selectedItem- 1 + NUM_MENU_ITEMS) % NUM_MENU_ITEMS;
+			}
+			if(event.key.keysym.sym == SDLK_DOWN && in_menu == 1){
+				selectedItem= (selectedItem + 1) % NUM_MENU_ITEMS;
+			}
+			if( event.key.keysym.sym == SDLK_UP && in_menu == 2){
+				selectedItem= (selectedItem- 1 + NUM_PAUSE_ITEMS) % NUM_PAUSE_ITEMS;
+			}
+			if(event.key.keysym.sym == SDLK_DOWN && in_menu == 2){
+				selectedItem= (selectedItem+ 1) % NUM_PAUSE_ITEMS;
+			}
+			if(event.key.keysym.sym == SDLK_RETURN){
+				if(in_menu == 1){
+				if (selectedItem== 0) {
+                        //printf("Start Game selected\n");
+                        in_menu = 0;
+						Mix_PlayMusic(bgMusic,-1);
+                    } else if (selectedItem== 1) {
+                        showControls();
+                    } else if (selectedItem== 2) {
+                        game_is_running = FALSE;
+                    }}
+				if(in_menu == 2){
+				if (selectedItem== 0) {
+                        //printf("Start Game selected\n");
+                        in_menu = 0;
+						Mix_ResumeMusic();
+                    } else if (selectedItem== 1) {
+                        showControls();
+                    } else if (selectedItem== 2) {
+                        in_menu =1;
+						Mix_HaltMusic();
+						setup();
+                    }else if(selectedItem==3){
+						game_is_running = FALSE;
+					}}
+
+
+			}}
 			break;
-		
-	
+		case SDL_KEYUP:
+			if(!in_menu){
+			if(event.key.keysym.sym == SDLK_RIGHT || event.key.keysym.sym == SDLK_LEFT){
+				move_hori = 0;
+			}
+			if(event.key.keysym.sym == SDLK_UP || event.key.keysym.sym == SDLK_DOWN){
+				move_vert = 0;
+			}}
+			if(event.key.keysym.sym == SDLK_F11){
+				windowed = !windowed;
+				if(windowed){
+					SDL_SetWindowFullscreen(window, SDL_FALSE);
+				}else{
+					SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+				}
+				SDL_GetWindowSize(window,&WINDOW_WIDTH,&WINDOW_HEIGHT);
+			}
+			break;
+
 	}
 
 }
 
-
-
 void update(){
 	//Keeping a fixed timestep
+	//if()
 	int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - last_frame_time);
 	if(time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME){
 		SDL_Delay(time_to_wait);
@@ -288,6 +259,7 @@ void update(){
 	// move the ball 20 pixels per second
 	ball.x += 200 * delta_time * move_hori;
 	ball.y += 200 * delta_time * move_vert;
+
 }
 
 
@@ -295,8 +267,8 @@ void render(){
 	//SDL_SetRenderDrawColor(renderer, <R> , <G> , <B> , <A>);
 	SDL_SetRenderDrawColor(renderer, 148,173,7 , 255);
 	SDL_RenderClear(renderer);
-	SDL_Texture* characterTexture = LoadTexture("./img/charac.png",renderer);
-	SDL_Texture* grassTexture = LoadTexture("./img/grass.png",renderer);
+	SDL_Texture* characterTexture = LoadTexture("C:/Coding/untitled2/img/charac.png",renderer);
+	SDL_Texture* grassTexture = LoadTexture("C:/Coding/untitled2/img/grass.png",renderer);
 	//TODO : HERE is where we can start drawing our game
 	//Draw a rectangle
 	SDL_Rect charac = {
@@ -404,6 +376,9 @@ void setup(){
 }
 
 void destroy_window(){
+	Mix_HaltMusic();
+	Mix_FreeMusic(bgMusic);
+    Mix_CloseAudio();
 	TTF_CloseFont(font);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);

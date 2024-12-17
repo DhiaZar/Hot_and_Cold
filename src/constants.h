@@ -8,3 +8,4 @@
 #define NUM_PAUSE_ITEMS 4
 #define FPS 120
 #define FRAME_TARGET_TIME (1000 / FPS)
+#define MAXIMUM_DISTANCE 500

@@ -17,6 +17,11 @@ TTF_Font* font = NULL;
 SDL_Texture* timerTexture = NULL;
 SDL_Texture* triesTexture = NULL;
 Mix_Music* bgMusic = NULL;
+Mix_Chunk* digSound = NULL;
+Mix_Chunk* foundSound = NULL;
+Mix_Chunk* nextSound = NULL;
+Mix_Chunk* winSound = NULL;
+Mix_Chunk* loseSound = NULL;
 SDL_Texture* characterTexture = NULL;
 SDL_Texture* game_back = NULL;
 SDL_Texture* levelTexture = NULL;
@@ -32,6 +37,7 @@ int minutes,seconds;
 int level = 1;
 int tries = 0;
 int win,passing;
+int scalingProgress1,scalingProgress2;
 int characterSelected = 1;
 unsigned end_time,start_time;
 char timerText[16];
@@ -82,7 +88,7 @@ struct chest {
 } chest;
 
 struct chest chests[3];
-void showChest();
+void showChests();
 int initialize_window(void){
 	if(SDL_Init(SDL_INIT_EVERYTHING) != 0){
 		fprintf(stderr, "Error Initializing SDL. \n");
@@ -100,7 +106,7 @@ int initialize_window(void){
 		fprintf(stderr, "Error creating SDL Window \n");
 		return FALSE;
 	}
-	renderer = SDL_CreateRenderer(window, -1, 0);
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if(!renderer){
 		fprintf(stderr, "Error creating SDL Renderer \n");
 		return FALSE;
@@ -124,12 +130,36 @@ int initialize_window(void){
         printf("SDL_mixer could not initialize! Mix_Error: %s\n", Mix_GetError());
         return FALSE;
     }
-	bgMusic = Mix_LoadMUS("C:/Coding/untitled2/audio/game_music.mp3");
+	bgMusic = Mix_LoadMUS("C:/Coding/untitled2/audio/theme.mp3");
 	if (!bgMusic) {
         printf("Failed to load background music! Mix_Error: %s\n", Mix_GetError());
         return FALSE;
     }
-
+	digSound = Mix_LoadWAV("C:/Coding/untitled2/audio/shovel.wav");
+	if (!digSound) {
+		printf("Failed to load music! Mix_Error: %s\n", Mix_GetError());
+		return FALSE;
+	}
+	winSound = Mix_LoadWAV("C:/Coding/untitled2/audio/win.wav");
+	if(!winSound) {
+		printf("Failed to load music! Mix_Error: %s\n", Mix_GetError());
+		return FALSE;
+	}
+	foundSound = Mix_LoadWAV("C:/Coding/untitled2/audio/success.wav");
+	if (!foundSound) {
+		printf("Failed to load background music! Mix_Error: %s\n", Mix_GetError());
+		return FALSE;
+	}
+	loseSound = Mix_LoadWAV("C:/Coding/untitled2/audio/lost.wav");
+	if (!loseSound) {
+		printf("Failed to load background music! Mix_Error: %s\n", Mix_GetError());
+		return FALSE;
+	}
+	nextSound = Mix_LoadWAV("C:/Coding/untitled2/audio/nextlevel.wav");
+	if (!nextSound) {
+		printf("Failed to load background music! Mix_Error: %s\n", Mix_GetError());
+		return FALSE;
+	}
 	return TRUE;
 
 }
@@ -212,10 +242,16 @@ void process_input(){
 			}
 			if(in_menu==0){
 				if(event.key.keysym.sym == SDLK_f) {
-					if(dist < 50) {
-						//printf("WELL DONE");
+					Mix_PlayChannel(-1,digSound,0);
+					if(temp < 128) {
+						Mix_PlayChannel(-1,foundSound,0);
 						for (int i = 0; i < level; ++i) {
-							chests[i].state = 2;
+							if(distance(ball.x,ball.y,chestsRect[i].x,chestsRect[i].y) <= 128) {
+								chests[i].state = 2;
+								temp = MAXIMUM_DISTANCE;
+								break;
+							}
+
 						}
 
 					}
@@ -306,6 +342,7 @@ void process_input(){
 					game_back = LoadTexture(backgroundSelected,renderer);
 					start_time = SDL_GetTicks();
 					nextLevel();
+					Mix_PlayMusic(bgMusic,0);
 					in_menu = 0;
 				}
 			}
@@ -333,11 +370,7 @@ void process_input(){
 	}
 
 }
-void showChests() {
-	for (int i = 0; i < level; ++i) {
-		printf("Chest n: %d state:%d \n",i,chests[i].state);
-	}
-}
+
 void update(){
 	//Keeping a fixed timestep
 	//if()
@@ -366,18 +399,21 @@ void update(){
 	ball.x += 200 * delta_time * move_hori;
 	ball.y += 200 * delta_time * move_vert;
 	if(in_menu == 0) {
-		for (int i = 0; i < 3; ++i) {
-			if(chests[i].state != 0){
+		int iteration = 0;
+		for (int i = 0; i < level; ++i) {
+			if(chests[i].state == 1){
 			dist = distance(chests[i].x,chests[i].y,ball.x,ball.y);
-			if(i==0) {
+			//printf("chest %d dist %d ",i,dist);
+			if(iteration==0) {
 				temp=dist;
 			}else{
 				if(dist < temp) {
 					temp = dist;
 				}
 			}
+			iteration++;
+			//printf("chest %d dist %d\n",i,temp);
 		}
-			showChests();
 	}
 		if(tries==0) {
 			in_menu = 6;
@@ -394,6 +430,7 @@ void update(){
 			switch(level){
 				case 3:
 					for(int i = 0; i < level; ++i) {
+						//printf("Chest %d State %d   ",i,chests[i].state);
 						if(chests[i].state != 2) {
 							win = 0;
 							break;
@@ -416,7 +453,6 @@ void update(){
 					}
 					if(passing) {
 						level=3;
-						passing = 0;
 						printf("Progressing to level 3");
 						nextLevel();
 					}
@@ -432,7 +468,6 @@ void update(){
 					}
 					if(passing) {
 						level=2;
-						passing = 0;
 						printf("Progressing to level 2");
 						nextLevel();
 					}
@@ -440,8 +475,10 @@ void update(){
 		}
 		}
 	}
+	scalingProgress1 = WINDOW_WIDTH / 800;
+	scalingProgress2 = WINDOW_HEIGHT / 400;
 	progress = max(1.0f - ((float)temp / MAXIMUM_DISTANCE),0.0f);
-	progressBarWidth = (int)(progress * 200);
+	progressBarWidth = (int)(progress * 200 * scalingProgress1);
 }
 
 
@@ -482,6 +519,11 @@ void render(){
 				SDL_RenderCopy(renderer, chest_texture, NULL, &chestsRect[i]);
 			}
 		}
+		if(passing){
+		SDL_RenderPresent(renderer);
+		SDL_Delay(2000);
+		passing =0 ;
+		}
 	timerTexture = RenderText(timerText,font,timerColor,renderer);
 	SDL_QueryTexture(timerTexture,NULL,NULL,&textWidth,&textHeight);
 	levelTexture = RenderText(levelText,font,timerColor,renderer);
@@ -498,12 +540,12 @@ void render(){
 	SDL_DestroyTexture(timerTexture);
 	SDL_RenderCopy(renderer, levelTexture,NULL,&levelRect);
 	SDL_DestroyTexture(levelTexture);
-		SDL_Rect backgroundBar = {WINDOW_WIDTH/2-100, 20, 200, 10};
+		SDL_Rect backgroundBar = {WINDOW_WIDTH/2-100, 20, 200*scalingProgress1, 10*scalingProgress2};
 		SDL_SetRenderDrawColor(renderer, 100, 100, 100, 128);
 		SDL_RenderFillRect(renderer, &backgroundBar);
 
 		// Draw the progress bar foreground (green)
-		SDL_Rect progressBar = {WINDOW_WIDTH/2-100, 20, progressBarWidth, 10};
+		SDL_Rect progressBar = {WINDOW_WIDTH/2-100, 20, progressBarWidth, 10*scalingProgress2};
 		SDL_SetRenderDrawColor(renderer, 200, 0, 0, 255);
 		SDL_RenderFillRect(renderer, &progressBar);
 	
@@ -586,7 +628,7 @@ void render(){
 				SDL_RenderCopy(renderer, charac3, NULL, &characSe);
 				SDL_DestroyTexture(charac3);
 		}
-		SDL_RenderPresent(renderer);
+		//SDL_RenderPresent(renderer);
 	}else
 		if(in_menu == 5) {
 			SDL_RenderCopy(renderer, menu_back, NULL, NULL);
@@ -598,9 +640,9 @@ void render(){
 			int ww4 = WINDOW_WIDTH/4;
 			SDL_Rect items[4] = {
 				{0, 0, ww4, WINDOW_HEIGHT},
-				{ww4, 0, ww4, WINDOW_HEIGHT},
-				{2*ww4, 0, ww4, WINDOW_HEIGHT},
-				{3*ww4, 0, ww4, WINDOW_HEIGHT},
+				{ww4+5, 0, ww4, WINDOW_HEIGHT},
+				{2*ww4+10, 0, ww4, WINDOW_HEIGHT},
+				{3*ww4+10, 0, ww4, WINDOW_HEIGHT},
 			};
 			for (int i = 0; i < 4; i++) {
 				if (i == selectedItem) {
@@ -620,16 +662,25 @@ void render(){
 		}else
 			if(in_menu == 6) {
 				SDL_RenderCopy(renderer, menu_back, NULL, NULL);
+				if(Mix_PlayingMusic()) {
+					Mix_HaltMusic();
+				}
 				if(!win) {
 					sprintf(winText,"You Lose !");
+					Mix_PlayChannel(-1, loseSound, 0);
 				}else {
 					sprintf(winText,"You Win !");
+					Mix_PlayChannel(-1, winSound, 0);
 				}
 				SDL_Texture* textTextureS2 = RenderTextStroke(winText,font,colorNormal,controlsColor,renderer);
 				SDL_QueryTexture(textTextureS2, NULL, NULL, &textWidth, &textHeight);
 				SDL_Rect renderQuad2 = { WINDOW_WIDTH/2 - textWidth/2 , WINDOW_HEIGHT/2-textHeight, textWidth,textHeight};
 				SDL_RenderCopy(renderer, textTextureS2, NULL, &renderQuad2);
 				SDL_DestroyTexture(textTextureS2);
+				SDL_RenderPresent(renderer);
+				SDL_Delay(3000);
+				setup();
+				in_menu = 1;
 
 			}
 	
@@ -643,16 +694,18 @@ void nextLevel() {
 			tries = 2;
 			break;
 		case 2:
+			Mix_PlayChannel(-1,nextSound,0);
 			tries = 3;
 			break;
 		case 3:
+			Mix_PlayChannel(-1,nextSound,0);
 			tries = 5;
 			break;
 	}
 	for (int i = 0; i < level; ++i) {
 		chests[i].state = 1;
-		chests[i].x = rand() % WINDOW_WIDTH - 2*chest.width;
-		chests[i].y = rand() % WINDOW_HEIGHT - 2*chest.height;
+		chests[i].x = rand() % (int)(WINDOW_WIDTH - 2*chest.width);
+		chests[i].y = rand() % (int)(WINDOW_HEIGHT - 2*chest.height);
 	}
 }
 
@@ -665,7 +718,7 @@ void setup(){
 	SDL_SetWindowFullscreen(window, SDL_FALSE);*/
 	end_time = 121000;
 	timer = 0;
-
+	Mix_VolumeMusic(MIX_MAX_VOLUME * 0.70);
 	ball.x = rand() % WINDOW_WIDTH + 1;
 	ball.y = rand() % WINDOW_HEIGHT + 1;
 	ball.width = 64;
@@ -684,6 +737,11 @@ void destroy_window(){
 	SDL_DestroyTexture(game_back);
 	Mix_HaltMusic();
 	Mix_FreeMusic(bgMusic);
+	Mix_FreeChunk(digSound);
+	Mix_FreeChunk(winSound);
+	Mix_FreeChunk(loseSound);
+	Mix_FreeChunk(foundSound);
+	Mix_FreeChunk(nextSound);
     Mix_CloseAudio();
 	TTF_CloseFont(font);
 	SDL_DestroyRenderer(renderer);
@@ -691,6 +749,13 @@ void destroy_window(){
 	IMG_Quit();
 	TTF_Quit();
 	SDL_Quit();
+}
+
+void showChests() {
+	for (int i = 0; i < 3; i++) {
+		printf(" Chest %d Coordinates(%f,%f)",i,chests[i].x,chests[i].y);
+	}
+	printf("\n");
 }
 
 int main(int argc, char* argv[]){
@@ -702,6 +767,7 @@ int main(int argc, char* argv[]){
 		process_input();
 		update();
 		render();
+		//showChests();
 	}
 
 	destroy_window();

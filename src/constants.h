@@ -6,6 +6,7 @@
 #define FONT_SIZE 28
 #define NUM_MENU_ITEMS 3
 #define NUM_PAUSE_ITEMS 4
+#define NUM_CONTROLS_ITEMS 6
 #define FPS 120
 #define FRAME_TARGET_TIME (1000 / FPS)
 #define MAXIMUM_DISTANCE 800

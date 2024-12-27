@@ -24,6 +24,7 @@ Mix_Chunk* winSound = NULL;
 Mix_Chunk* loseSound = NULL;
 SDL_Texture* characterTexture = NULL;
 SDL_Texture* game_back = NULL;
+SDL_Texture* menu_back = NULL;
 SDL_Texture* levelTexture = NULL;
 SDL_Texture* chest_texture = NULL;
 SDL_Rect chestsRect[3];
@@ -51,7 +52,7 @@ const char* menuItems[NUM_MENU_ITEMS] = {"Start Game", "Controls", "Quit"} ;
 const char* pauseItems[NUM_PAUSE_ITEMS] = {"Resume", "Controls", "Return to Menu", "Quit"};
 const char* controlsItems[NUM_CONTROLS_ITEMS] = {"Escape - Quit Game", "Backspace - Pause Game","Enter - Select","Arrows - Movement","F - Dig","F11 - Fullscreen"};
 const char* characterNames[3] = {"Vex","Nova","Ryder"};
-const char* backgrounds[4] = {"C:/Coding/untitled2/img/underwater.png","C:/Coding/untitled2/img/space.png","C:/Coding/untitled2/img/forest.png","C:/Coding/untitled2/img/house.png"};
+const char* backgrounds[4] = {"../img/underwater.png","../img/space.png","../img/forest.png","../img/house.png"};
 int selectedItem= 0;
 char backgroundSelected[50];
 
@@ -120,7 +121,7 @@ int initialize_window(void){
 		fprintf(stderr,"SDL_TTF could not initialize ");
 		return FALSE;
 	}
-	font = TTF_OpenFont("C:/Coding/untitled2/font/joystix.otf",FONT_SIZE);
+	font = TTF_OpenFont("../font/joystix.otf",FONT_SIZE);
 	if(!font){
 		fprintf(stderr, "Failed to load font! \n ");
 		printf("TTF_OpenFont: %s\n", TTF_GetError());
@@ -130,32 +131,32 @@ int initialize_window(void){
         printf("SDL_mixer could not initialize! Mix_Error: %s\n", Mix_GetError());
         return FALSE;
     }
-	bgMusic = Mix_LoadMUS("C:/Coding/untitled2/audio/theme.mp3");
+	bgMusic = Mix_LoadMUS("../audio/theme.mp3");
 	if (!bgMusic) {
         printf("Failed to load background music! Mix_Error: %s\n", Mix_GetError());
         return FALSE;
     }
-	digSound = Mix_LoadWAV("C:/Coding/untitled2/audio/shovel.wav");
+	digSound = Mix_LoadWAV("../audio/shovel.wav");
 	if (!digSound) {
 		printf("Failed to load music! Mix_Error: %s\n", Mix_GetError());
 		return FALSE;
 	}
-	winSound = Mix_LoadWAV("C:/Coding/untitled2/audio/win.wav");
+	winSound = Mix_LoadWAV("../audio/win.wav");
 	if(!winSound) {
 		printf("Failed to load music! Mix_Error: %s\n", Mix_GetError());
 		return FALSE;
 	}
-	foundSound = Mix_LoadWAV("C:/Coding/untitled2/audio/success.wav");
+	foundSound = Mix_LoadWAV("../audio/success.wav");
 	if (!foundSound) {
 		printf("Failed to load background music! Mix_Error: %s\n", Mix_GetError());
 		return FALSE;
 	}
-	loseSound = Mix_LoadWAV("C:/Coding/untitled2/audio/lost.wav");
+	loseSound = Mix_LoadWAV("../audio/lost.wav");
 	if (!loseSound) {
 		printf("Failed to load background music! Mix_Error: %s\n", Mix_GetError());
 		return FALSE;
 	}
-	nextSound = Mix_LoadWAV("C:/Coding/untitled2/audio/nextlevel.wav");
+	nextSound = Mix_LoadWAV("../audio/nextlevel.wav");
 	if (!nextSound) {
 		printf("Failed to load background music! Mix_Error: %s\n", Mix_GetError());
 		return FALSE;
@@ -342,7 +343,7 @@ void process_input(){
 					game_back = LoadTexture(backgroundSelected,renderer);
 					start_time = SDL_GetTicks();
 					nextLevel();
-					Mix_PlayMusic(bgMusic,0);
+					Mix_PlayMusic(bgMusic,-1);
 					in_menu = 0;
 				}
 			}
@@ -485,11 +486,11 @@ void update(){
 void render(){
 	SDL_RenderClear(renderer);
 	//SDL_SetRenderDrawColor(renderer, <R> , <G> , <B> , <A>);
-	SDL_Texture* menu_back = LoadTexture("C:/Coding/untitled2/img/main_menu.png",renderer);
-	//characterTexture = LoadTexture("C:/Coding/untitled2/img/charac.png",renderer);
+	menu_back = LoadTexture("../img/main_menu.png",renderer);
+	//characterTexture = LoadTexture("../img/charac.png",renderer);
 
 	SDL_GetWindowSize(window, &WINDOW_WIDTH, &WINDOW_HEIGHT);
-	//SDL_Texture* grassTexture = LoadTexture("C:/Coding/untitled2/img/grass.png",renderer);
+	//SDL_Texture* grassTexture = LoadTexture("../img/grass.png",renderer);
 	//TODO : HERE is where we can start drawing our game
 	//Draw a rectangle
 	SDL_Rect characSe = {
@@ -504,7 +505,7 @@ void render(){
 	if(in_menu==0){
 		SDL_RenderCopy(renderer, game_back, NULL, NULL);
 		char pathtocharacter[100];
-		sprintf(pathtocharacter,"C:/Coding/untitled2/img/charac%d.png",characterSelected);
+		sprintf(pathtocharacter,"../img/charac%d.png",characterSelected);
 		SDL_Texture* characterTexture = LoadTexture(pathtocharacter,renderer);
 		SDL_Rect charac = {
 			(int)ball.x,
@@ -603,7 +604,7 @@ void render(){
 	}else
 		if(in_menu == 4) {
 			float scale = 1.5;
-			SDL_Texture* menu_back = LoadTexture("C:/Coding/untitled2/img/main_menu.png",renderer);
+			SDL_Texture* menu_back = LoadTexture("../img/main_menu.png",renderer);
 			SDL_RenderCopy(renderer, menu_back, NULL, NULL);
 			SDL_DestroyTexture(menu_back);
 			SDL_Texture* textTextureS = RenderText("Select your character ",font,colorNormal,renderer);
@@ -620,7 +621,7 @@ void render(){
 				SDL_DestroyTexture(textTextureNames);
 
 				char pathtocharacter[100];
-				sprintf(pathtocharacter,"C:/Coding/untitled2/img/charac%d.png",i);
+				sprintf(pathtocharacter,"../img/charac%d.png",i);
 				SDL_Texture* charac3 = LoadTexture(pathtocharacter,renderer);
 				characSe.y = WINDOW_HEIGHT / 2 - ball.height*0.5;
 
@@ -712,7 +713,7 @@ void nextLevel() {
 void setup(){
 	srand(time(NULL));
 	start_time = SDL_GetTicks();
-	chest_texture = LoadTexture("C:/Coding/untitled2/img/chest.png",renderer);
+	chest_texture = LoadTexture("../img/chest.png",renderer);
 	/*SDL_SetWindowFullscreen(window, SDL_TRUE);
 	SDL_GetWindowSize(window,&WINDOW_HEIGHT,&WINDOW_WIDTH);
 	SDL_SetWindowFullscreen(window, SDL_FALSE);*/
@@ -723,6 +724,7 @@ void setup(){
 	ball.y = rand() % WINDOW_HEIGHT + 1;
 	ball.width = 64;
 	ball.height = 128;
+	level =1;
 	for(int i = 0; i < 3; i++) {
 		chests[i].state = 0;
 		chests[i].width = 64;

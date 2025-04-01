@@ -4,13 +4,14 @@
 
 <h2>Project Screenshots:</h2>
 
-<img src="[https://imgur.com/Ru3AuJ3](https://imgur.com/Ru3AuJ3)" alt="project-screenshot" width="50" height="50/">
+<img src="https://i.imgur.com/Ru3AuJ3.png" alt="project-screenshot" width="50" height="50/">
 
-<img src="https://imgur.com/tflTYo3" alt="project-screenshot" width="50" height="50/">
+<img src="https://i.imgur.com/tflTYo3.png" alt="project-screenshot" width="50" height="50/">
 
-<img src="https://imgur.com/TGKH50Z" alt="project-screenshot" width="50" height="50/">
+<img src="https://i.imgur.com/TGKH50Z.png" alt="project-screenshot" width="50" height="50/"> 
+<br />
 
-<img src="https://imgur.com/bDmci2X" alt="project-screenshot" width="400" height="400/">
+<img src="https://i.imgur.com/bDmci2X.png" alt="project-screenshot" width="600" height="600/">
 
   
   
